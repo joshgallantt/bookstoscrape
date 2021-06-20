@@ -3,7 +3,6 @@ import bs4
 import csv
 import concurrent.futures
 import time
-from os import system,name
 
 class Book:
     def __init__(self, page_url, title = None, description = None, category = None, rating = None, upc = None, price = None, stock = None):
@@ -24,16 +23,6 @@ class Book:
     
     def __repr__(self):
         return repr(self.title)
-
-def clear():
-  
-    # for windows
-    if name == 'nt':
-        _ = system('cls')
-  
-    # for mac and linux(here, os.name is 'posix')
-    else:
-        _ = system('clear')
 
 def get_list_of_books():
     current_page = 45
@@ -82,14 +71,13 @@ def main():
     get_list_of_books()
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(get_book_data,list_of_books)
-
     write_to_csv(list_of_books)
 
 if __name__ == "__main__":
-    start = time.perf_counter()
     s = requests.Session()
     list_of_books = []
     counter = 0
+    start = time.perf_counter()
     main()
     end = time.perf_counter() - start
     print(f'Completed in {round(end,2)} seconds.',f'({round(end/float(len(list_of_books)),2)} seconds per book)' )
