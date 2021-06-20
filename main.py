@@ -4,7 +4,7 @@ import csv
 
 #create a book object with data we want to scrape
 class Book:
-    def __init__(self, page_url, title = None, description = None, category = None, rating = None, upc = None, price = None, stock = None):
+    def __init__(self, page_url, title, description = None, category = None, rating = None, upc = None, price = None, stock = None):
         self.page_url = page_url
         self.title = title
         self.description = description
@@ -23,7 +23,6 @@ class Book:
     def __repr__(self):
         return repr(self.title)
 
-
 list_of_books_on_current_page = []
 final_list_of_books = []
 current_page = 49
@@ -41,25 +40,27 @@ while True:
     #make the soup equal to the page we are on (.content is important here for symbol decoding), set the next page text
     soup = bs4.BeautifulSoup(requests.get(url + f"page-{current_page}.html").content,"lxml")
     html_books = soup.select(".product_pod")
-    next_page_text = soup.find_all("a")[-1].text
+    # next_page_text = soup.find_all("a")[-1].text
+    next_page_text = soup.select(".pager")[-1].text
 
     print(f"\n Currently processing page {current_page}:\n")
     
-    # for each book on this page, create a book object with a link to each book, and create a list of these book objects
+    # for each book on this page, create a book object with a title and link to each book, and create a list of these book objects
     for html_book in html_books:
-        bookpage = html_book.select("a")[0]['href']
-        list_of_books_on_current_page.append(Book(url + bookpage))
+        book_url = html_book.select("h3 a")[0]['href']
+        book_title = html_book.select("h3 a")[0]['title']
+        list_of_books_on_current_page.append(Book(url + book_url, book_title))
     
     # for each book on the current page, go to their individual page and scrape the data
     for i, book in enumerate(list_of_books_on_current_page):
         soup = bs4.BeautifulSoup(requests.get(book.page_url).content,"lxml")
-        book.title = soup.select(".active")[0].text
-        book.description = soup.findAll("p")[3].text
-        book.category = soup.findAll("a")[3].text
-        book.rating = ratings[soup.findAll("p")[2]["class"][1]]
-        book.upc = soup.findAll("td")[0].text
-        book.price = soup.findAll("td")[2].text
-        book.stock = "".join([l for l in soup.findAll("td")[5].text if l.isdigit()])
+        # book.title = soup.select(".active")[0].text
+        book.description = soup.select_one("#product_description + p").text
+        book.category = soup.select(".breadcrumb li a")[2].text
+        book.rating = ratings[soup.select_one('p[class*="star-rating"]')['class'][1]]
+        book.upc = soup.select(".table.table-striped td")[0].text
+        book.price = soup.select(".table.table-striped td")[2].text
+        book.stock = "".join([l for l in soup.select(".table.table-striped td")[5].text if l.isdigit()])
 
     # after finishing the page, move the books to the final list
         print(f"Data gathered for {book.title}")
