@@ -50,21 +50,21 @@ while True:
         book_url = html_book.select("h3 a")[0]['href']
         book_title = html_book.select("h3 a")[0]['title']
         list_of_books_on_current_page.append(Book(url + book_url, book_title))
-    
     # for each book on the current page, go to their individual page and scrape the data
-    for i, book in enumerate(list_of_books_on_current_page):
+    for book in list_of_books_on_current_page:
         soup = bs4.BeautifulSoup(requests.get(book.page_url).content,"lxml")
-        # book.title = soup.select(".active")[0].text
         book.description = soup.select_one("#product_description + p").text
         book.category = soup.select(".breadcrumb li a")[2].text
         book.rating = ratings[soup.select_one('p[class*="star-rating"]')['class'][1]]
         book.upc = soup.select(".table.table-striped td")[0].text
         book.price = soup.select(".table.table-striped td")[2].text
         book.stock = "".join([l for l in soup.select(".table.table-striped td")[5].text if l.isdigit()])
+        print(f"Data gathered for {book.title}")
 
     # after finishing the page, move the books to the final list
-        print(f"Data gathered for {book.title}")
-        final_list_of_books.append(list_of_books_on_current_page.pop(i))
+
+        final_list_of_books.extend(list_of_books_on_current_page)
+        list_of_books_on_current_page = []
 
     # check if the page has a next button, if it does select that page and restart the loop
     if next_page_text == 'next':
